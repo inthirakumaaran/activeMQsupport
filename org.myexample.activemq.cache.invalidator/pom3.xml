@@ -15,13 +15,11 @@
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
             <version>${org.apache.felix.scr.ds-annotations.version}</version>
-            <scope> provided</scope>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.user.core</artifactId>
             <version>${org.wso2.carbon.user.core.version}</version>
-            <scope> provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
@@ -34,11 +32,11 @@
             <artifactId>log4j-api</artifactId>
             <version>2.14.1</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.apache.logging.log4j</groupId>-->
-<!--            <artifactId>log4j-core</artifactId>-->
-<!--            <version>2.14.1</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.14.1</version>
+        </dependency>
 
     </dependencies>
 
@@ -57,30 +55,6 @@
 
     <build>
         <plugins>
-            <!-- Shade Plugin Configuration -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version> <!-- Use the latest version -->
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-<!--                        <configuration>-->
-<!--                            <artifactSet>-->
-<!--                                <includes>-->
-<!--                                    &lt;!&ndash; Include only the specific dependency &ndash;&gt;-->
-<!--                                    <include>org.apache.activemq:activemq-all</include>-->
-<!--                                </includes>-->
-<!--                            </artifactSet>-->
-<!--                            <minimizeJar>true</minimizeJar>-->
-<!--                        </configuration>-->
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Maven Bundle Plugin Configuration -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
@@ -104,16 +78,32 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.myexample.activemq.internal
+                            org.myexample.activemq.internal,
+<!--                            javax.jms.*-->
                         </Private-Package>
+                        <Embed-Dependency>
+<!--                            org.apache.activemq:activemq-all:5.16.3;scope=compile|runtime;inline=false-->
+<!--                            org.apache.activemq:activemq-all:5.16.3;scope=compile|runtime;inline=false-->
+<!--                            *;scope=compile|runtime;inline=false;-->
+                            org.apache.activemq:activemq-all:5.16.3;inline=false
+                        </Embed-Dependency>
 <!--                        <Embed-Transitive>true</Embed-Transitive>-->
                         <Export-Package>
                             !org.myexample.activemq.internal,
                             org.myexample.activemq.*,
+                            javax.jms;version="5.16.3",
+                            org.apache.activemq;version="5.16.3"
                         </Export-Package>
+<!--                        &lt;!&ndash;This is not the recommended way. Please add the required imports in the-->
+<!--                            Import-Package section and remove the DynamicImport-Package section&ndash;&gt;-->
                         <Import-Package>
                             javax.cache;version="[1.0,2)",
                             javax.cache.event;version="[1.0,2)",
+<!--                            !javax.jms,-->
+                            javax.jms;version="[5.0,6)",
+                            org.apache.activemq;version="[5.0,6)",
+<!--                            !org.apache.activemq,-->
+<!--                            !org.myexample.activemq,-->
                             org.apache.commons.lang.exception;version="[2.6,3)",
                             org.apache.commons.logging;version="[1.2,2)",
                             org.osgi.framework;version="[1.9,2)",
