@@ -56,6 +56,28 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version> <!-- Use the latest version -->
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <!--                        <configuration>-->
+                        <!--                            <artifactSet>-->
+                        <!--                                <includes>-->
+                        <!--                                    &lt;!&ndash; Include only the specific dependency &ndash;&gt;-->
+                        <!--                                    <include>org.apache.activemq:activemq-all</include>-->
+                        <!--                                </includes>-->
+                        <!--                            </artifactSet>-->
+                        <!--                            <minimizeJar>true</minimizeJar>-->
+                        <!--                        </configuration>-->
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
                 <version>${maven.scr.plugin.version}</version>

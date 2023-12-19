@@ -13,13 +13,21 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.myexample.activemq.ConsumerActiveMQCacheInvalidator;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import javax.cache.CacheInvalidationRequestSender;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
 
-@Component(name = "org.myexample.activemq.ActiveMQCacheInvalidatorServiceComponent",
-        immediate = true)
+import static org.myexample.activemq.CacheInvalidatorUtils.isActiveMQCacheInvalidatorEnabled;
+
+@Component(
+        name = "org.myexample.activemq.ActiveMQCacheInvalidatorServiceComponent",
+        immediate = true
+)
 public class ActiveMQCacheInvalidatorServiceComponent {
 
     private static Log log = LogFactory.getLog(ActiveMQCacheInvalidatorServiceComponent.class);
@@ -27,6 +35,7 @@ public class ActiveMQCacheInvalidatorServiceComponent {
     private ServiceRegistration serviceRegistration2 = null;
     private ServiceRegistration serviceRegistration3 = null;
     private ServiceRegistration serviceRegistration4 = null;
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 
     @Activate
@@ -44,11 +53,33 @@ public class ActiveMQCacheInvalidatorServiceComponent {
                 producer,null);
         serviceRegistration4 = context.getBundleContext().registerService(CacheEntryUpdatedListener.class.getName(),
                 producer,null);
-        ConsumerActiveMQCacheInvalidator.startService();
-        log.info("..............................................ActiveMQ Cache Invalidator Service bundle activated successfully.............");
+
+
+        // Start polling for ActiveMQCacheInvalidatorEnabled
+        startPollingForActiveMQCacheInvalidator();
+    }
+
+    private void startPollingForActiveMQCacheInvalidator() {
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                if (isActiveMQCacheInvalidatorEnabled() != null && isActiveMQCacheInvalidatorEnabled()) {
+                    ConsumerActiveMQCacheInvalidator.startService();
+                    log.info("ActiveMQ Cache Invalidator Service bundle activated successfully.");
+                    scheduler.shutdown(); // Stop polling once activated
+                }
+            } catch (Exception e) {
+                log.error("Error while checking ActiveMQ Cache Invalidator status", e);
+            }
+        }, 0, 10, TimeUnit.SECONDS); // Check every 10 seconds, start immediately
     }
 
     protected void deactivate(ComponentContext context) {
+
+
+        // Cleanup resources
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
 
         // Unregistering the listener service.
         if (serviceRegistration1 != null) {

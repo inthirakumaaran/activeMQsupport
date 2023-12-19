@@ -24,9 +24,13 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
-import static org.myexample.activemq.Constants.BROKER_URL;
-import static org.myexample.activemq.Constants.PRODUCER_1;
-import static org.myexample.activemq.Constants.TOPIC_NAME;
+import static org.myexample.activemq.CacheInvalidatorUtils.BROKER_URL;
+import static org.myexample.activemq.CacheInvalidatorUtils.PRODUCER_1;
+import static org.myexample.activemq.CacheInvalidatorUtils.TOPIC_NAME;
+import static org.myexample.activemq.CacheInvalidatorUtils.getActiveMQBrokerUrl;
+import static org.myexample.activemq.CacheInvalidatorUtils.getCacheInvalidationTopic;
+import static org.myexample.activemq.CacheInvalidatorUtils.getProducerName;
+import static org.myexample.activemq.CacheInvalidatorUtils.isActiveMQCacheInvalidatorEnabled;
 
 public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListener, CacheEntryUpdatedListener,
         CacheEntryCreatedListener, CacheInvalidationRequestSender {
@@ -39,6 +43,10 @@ public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListen
         String tenantDomain = cacheEntryInfo.getTenantDomain();
         int tenantId = cacheEntryInfo.getTenantId();
 
+//        if (!isActiveMQCacheInvalidatorEnabled()) {
+//            log.debug("ActiveMQ broker is not enabled");
+//            return;
+//        }
         if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
             if (log.isDebugEnabled()) {
                 String stackTrace = ExceptionUtils.getStackTrace(new Throwable());
@@ -69,7 +77,12 @@ public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListen
 
         while (numberOfRetries < 60) {
 
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
+            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getActiveMQBrokerUrl());
+
+//            System.out.println(getActiveMQBrokerUrl());
+//            System.out.println(isActiveMQCacheInvalidatorEnabled());
+//            System.out.println(getCacheInvalidationTopic());
+//            System.out.println(getProducerName());
 
             try {
                 // Create a connection
@@ -80,14 +93,14 @@ public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListen
                 Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
                 // Create a topic
-                Topic topic = session.createTopic(TOPIC_NAME);
+                Topic topic = session.createTopic(getCacheInvalidationTopic());
 
                 // Create a message producer
                 MessageProducer producer = session.createProducer(topic);
 
                 // Create and send a message from the publisher
                 TextMessage message = session.createTextMessage(clusterCacheInvalidationRequest.toString());
-                message.setStringProperty("sender", PRODUCER_1);
+                message.setStringProperty("sender", getProducerName());
                 producer.send(message);
 
                 // Clean up resources
@@ -96,12 +109,12 @@ public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListen
                 connection.close();
                 break;
             } catch (JMSException e) {
-                log.error("Something went wrong with activemq producer." + e);
+                log.error("Something went wrong with activeMQ producer." + e);
                 numberOfRetries++;
-
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ignored) {
+                    log.debug("Thread sleeping interrupted for ActiveMQ producer.");
                 }
             }
         }

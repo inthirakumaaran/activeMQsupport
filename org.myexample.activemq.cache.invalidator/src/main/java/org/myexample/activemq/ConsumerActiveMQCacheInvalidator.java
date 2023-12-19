@@ -19,9 +19,13 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
-import static org.myexample.activemq.Constants.BROKER_URL;
-import static org.myexample.activemq.Constants.CLEAR_ALL_PREFIX;
-import static org.myexample.activemq.Constants.TOPIC_NAME;
+import static org.myexample.activemq.CacheInvalidatorUtils.BROKER_URL;
+import static org.myexample.activemq.CacheInvalidatorUtils.CLEAR_ALL_PREFIX;
+import static org.myexample.activemq.CacheInvalidatorUtils.TOPIC_NAME;
+import static org.myexample.activemq.CacheInvalidatorUtils.getActiveMQBrokerUrl;
+import static org.myexample.activemq.CacheInvalidatorUtils.getCacheInvalidationTopic;
+import static org.myexample.activemq.CacheInvalidatorUtils.getProducerName;
+import static org.myexample.activemq.CacheInvalidatorUtils.isActiveMQCacheInvalidatorEnabled;
 
 public class ConsumerActiveMQCacheInvalidator {
 
@@ -33,8 +37,13 @@ public class ConsumerActiveMQCacheInvalidator {
 
     public static void startService() {
 
+//        if (!isActiveMQCacheInvalidatorEnabled()) {
+//            log.debug("ActiveMQ broker is not enabled");
+//            return;
+//        }
+
         // Create a connection factory
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getActiveMQBrokerUrl());
 
         try {
             // Create a connection
@@ -45,7 +54,7 @@ public class ConsumerActiveMQCacheInvalidator {
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
             // Create a topic
-            Topic topic = session.createTopic(TOPIC_NAME);
+            Topic topic = session.createTopic(getCacheInvalidationTopic());
 
             // Create a message consumer
             MessageConsumer consumer = session.createConsumer(topic);
@@ -60,10 +69,14 @@ public class ConsumerActiveMQCacheInvalidator {
                         e.printStackTrace();
                     }
                 }
+//                System.out.println(getActiveMQBrokerUrl());
+//                System.out.println(isActiveMQCacheInvalidatorEnabled());
+//                System.out.println(getCacheInvalidationTopic());
+//                System.out.println(getProducerName());
             });
 
         } catch (Exception e) {
-            log.error("something went wrong with activemq consumer " + e);
+            log.error("Something went wrong with ActiveMQ consumer " + e);
         }
     }
 
@@ -107,6 +120,7 @@ public class ConsumerActiveMQCacheInvalidator {
             }
         } else {
             System.out.println("Input does not match the pattern.");
+            log.debug("Input doesn't match the expected msg pattern.");
         }
     }
 
