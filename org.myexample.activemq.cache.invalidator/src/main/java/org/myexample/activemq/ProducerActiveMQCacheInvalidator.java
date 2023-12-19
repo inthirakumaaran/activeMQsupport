@@ -1,20 +1,13 @@
 package org.myexample.activemq;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.caching.impl.CachingConstants;
 import org.wso2.carbon.caching.impl.clustering.ClusterCacheInvalidationRequest;
-import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.user.api.Permission;
-import org.wso2.carbon.user.core.UserStoreException;
-import org.wso2.carbon.user.core.UserStoreManager;
-import org.wso2.carbon.user.core.common.AbstractUserOperationEventListener;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-
-import java.util.List;
-import java.util.Map;
 
 import javax.cache.CacheEntryInfo;
 import javax.cache.CacheInvalidationRequestSender;
@@ -23,27 +16,25 @@ import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.jms.Topic;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import static org.myexample.activemq.Constants.BROKER_URL;
+import static org.myexample.activemq.Constants.PRODUCER_1;
+import static org.myexample.activemq.Constants.TOPIC_NAME;
 
-import javax.jms.*;
-
-public class producerUserOperationEventListener implements CacheEntryRemovedListener, CacheEntryUpdatedListener,
+public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListener, CacheEntryUpdatedListener,
         CacheEntryCreatedListener, CacheInvalidationRequestSender {
 
-    //Sample Code
-    private static Log log = LogFactory.getLog(producerUserOperationEventListener.class);
-    private static String AUDIT_MESSAGE = "Initiator: %s performed the Action: %s on Target: %s ";
-
-    private static final String BROKER_URL = "tcp://localhost:61616";
-
-    // Topic name
-    private static final String TOPIC_NAME = "CacheTopic";
-    public static final String PRODUCER_1 = "producer1";
+    private static Log log = LogFactory.getLog(ProducerActiveMQCacheInvalidator.class);
 
     @Override
     public void send(CacheEntryInfo cacheEntryInfo) {
-
 
         String tenantDomain = cacheEntryInfo.getTenantDomain();
         int tenantId = cacheEntryInfo.getTenantId();
@@ -69,12 +60,12 @@ public class producerUserOperationEventListener implements CacheEntryRemovedList
 
         //Send the cluster message
         ClusterCacheInvalidationRequest.CacheInfo cacheInfo =
-                new ClusterCacheInvalidationRequest.CacheInfo(cacheEntryInfo.getCacheManagerName(), cacheEntryInfo.getCacheName(),
+                new ClusterCacheInvalidationRequest.CacheInfo(cacheEntryInfo.getCacheManagerName(),
+                        cacheEntryInfo.getCacheName(),
                         cacheEntryInfo.getCacheKey());
 
         ClusterCacheInvalidationRequest clusterCacheInvalidationRequest = new ClusterCacheInvalidationRequest(
                 cacheInfo, tenantDomain, tenantId);
-
 
         while (numberOfRetries < 60) {
 
@@ -105,8 +96,9 @@ public class producerUserOperationEventListener implements CacheEntryRemovedList
                 connection.close();
                 break;
             } catch (JMSException e) {
-                log.error("something went wrong with activemq");
+                log.error("Something went wrong with activemq producer." + e);
                 numberOfRetries++;
+
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ignored) {
@@ -116,18 +108,19 @@ public class producerUserOperationEventListener implements CacheEntryRemovedList
 
     }
 
-
     public void entryCreated(CacheEntryEvent cacheEntryEvent) throws CacheEntryListenerException {
 
     }
 
     @Override
     public void entryRemoved(CacheEntryEvent cacheEntryEvent) throws CacheEntryListenerException {
+
         send(createCacheInfo(cacheEntryEvent));
     }
 
     @Override
     public void entryUpdated(CacheEntryEvent cacheEntryEvent) throws CacheEntryListenerException {
+
         send(createCacheInfo(cacheEntryEvent));
     }
 
