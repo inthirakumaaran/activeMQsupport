@@ -62,7 +62,8 @@ public class ActiveMQCacheInvalidatorServiceComponent {
     private void startPollingForActiveMQCacheInvalidator() {
         scheduler.scheduleWithFixedDelay(() -> {
             try {
-                if (isActiveMQCacheInvalidatorEnabled() != null && isActiveMQCacheInvalidatorEnabled()) {
+//                if (isActiveMQCacheInvalidatorEnabled() != null && isActiveMQCacheInvalidatorEnabled()) {
+                if (isActiveMQCacheInvalidatorEnabled() != null) {
                     ConsumerActiveMQCacheInvalidator.startService();
                     log.info("ActiveMQ Cache Invalidator Service bundle activated successfully.");
                     scheduler.shutdown(); // Stop polling once activated
@@ -99,21 +100,6 @@ public class ActiveMQCacheInvalidatorServiceComponent {
 //        }
 
         log.info("..................................ActiveMQ Cache Invalidator Service bundle is deactivated.......................................");
-    }
-
-    @Reference(name = "user.realm.service.default",
-            service = RealmService.class,
-            cardinality = ReferenceCardinality.MANDATORY,
-            policy = ReferencePolicy.DYNAMIC,
-            unbind = "unsetRealmService")
-    protected void setRealmService(RealmService realmService) {
-
-        ActiveMQCacheInvalidatorDataHolder.getInstance().setRealmService(realmService);
-    }
-
-    protected void unsetRealmService(RealmService realmService) {
-
-        ActiveMQCacheInvalidatorDataHolder.getInstance().setRealmService(null);
     }
 
 }

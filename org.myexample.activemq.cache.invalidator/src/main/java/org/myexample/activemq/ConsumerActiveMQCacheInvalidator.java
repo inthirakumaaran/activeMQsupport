@@ -37,10 +37,11 @@ public class ConsumerActiveMQCacheInvalidator {
 
     public static void startService() {
 
-//        if (!isActiveMQCacheInvalidatorEnabled()) {
-//            log.debug("ActiveMQ broker is not enabled");
-//            return;
-//        }
+        if (!isActiveMQCacheInvalidatorEnabled()) {
+//            log.debug("ActiveMQ based cache invalidation is not enabled");
+            log.info(".........................ActiveMQ broker consumer is not enabled..............");
+            return;
+        }
 
         // Create a connection factory
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getActiveMQBrokerUrl());
@@ -103,8 +104,8 @@ public class ConsumerActiveMQCacheInvalidator {
                 carbonContext.setTenantId(Integer.valueOf(tenantId));
                 carbonContext.setTenantDomain(tenantDomain);
 
-                CacheManager cacheManager2 = Caching.getCacheManagerFactory().getCacheManager(cacheManager);
-                Cache<Object, Object> cache2 = cacheManager2.getCache(cache);
+                CacheManager cacheMgr = Caching.getCacheManagerFactory().getCacheManager(cacheManager);
+                Cache<Object, Object> cache2 = cacheMgr.getCache(cache);
                 if (cache2 instanceof CacheImpl) {
                     if (CLEAR_ALL_PREFIX.equals(cacheKey)) {
                         ((CacheImpl) cache2).removeAllLocal();

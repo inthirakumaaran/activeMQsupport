@@ -43,10 +43,11 @@ public class ProducerActiveMQCacheInvalidator implements CacheEntryRemovedListen
         String tenantDomain = cacheEntryInfo.getTenantDomain();
         int tenantId = cacheEntryInfo.getTenantId();
 
-//        if (!isActiveMQCacheInvalidatorEnabled()) {
-//            log.debug("ActiveMQ broker is not enabled");
-//            return;
-//        }
+        if (!isActiveMQCacheInvalidatorEnabled()) {
+            log.debug("ActiveMQ based cache invalidation is not enabled");
+            return;
+        }
+
         if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
             if (log.isDebugEnabled()) {
                 String stackTrace = ExceptionUtils.getStackTrace(new Throwable());
