@@ -14,28 +14,39 @@ import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
-import static org.myexample.activemq.CacheInvalidatorUtils.BROKER_URL;
 import static org.myexample.activemq.CacheInvalidatorUtils.CLEAR_ALL_PREFIX;
-import static org.myexample.activemq.CacheInvalidatorUtils.TOPIC_NAME;
 import static org.myexample.activemq.CacheInvalidatorUtils.getActiveMQBrokerUrl;
 import static org.myexample.activemq.CacheInvalidatorUtils.getCacheInvalidationTopic;
-import static org.myexample.activemq.CacheInvalidatorUtils.getProducerName;
 import static org.myexample.activemq.CacheInvalidatorUtils.isActiveMQCacheInvalidatorEnabled;
 
 public class ConsumerActiveMQCacheInvalidator {
 
     private static Log log = LogFactory.getLog(ConsumerActiveMQCacheInvalidator.class);
 
+    private static volatile ConsumerActiveMQCacheInvalidator instance;
+
     private ConsumerActiveMQCacheInvalidator() {
 
     }
 
-    public static void startService() {
+    public static ConsumerActiveMQCacheInvalidator getInstance() {
+        if (instance == null) {
+            synchronized (ConsumerActiveMQCacheInvalidator.class) {
+                if (instance == null) {
+                    instance = new ConsumerActiveMQCacheInvalidator();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public void startService() {
 
         if (!isActiveMQCacheInvalidatorEnabled()) {
 //            log.debug("ActiveMQ based cache invalidation is not enabled");
@@ -66,8 +77,8 @@ public class ConsumerActiveMQCacheInvalidator {
                     try {
                         System.out.println("Consumer Received message: " + ((TextMessage) message).getText());
                         invalidateCache(((TextMessage) message).getText());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    }  catch (JMSException e) {
+                        log.error("Error in reading the cache invalidation message. " + e);
                     }
                 }
 //                System.out.println(getActiveMQBrokerUrl());
@@ -81,7 +92,7 @@ public class ConsumerActiveMQCacheInvalidator {
         }
     }
 
-    public static void invalidateCache(String message) {
+    public void invalidateCache(String message) {
 
         String regexPattern = "ClusterCacheInvalidationRequest\\{tenantId=(?<tenantId>-?\\d+), " +
                 "tenantDomain='(?<tenantDomain>[\\w.]+)', messageId=(?<messageId>[\\w-]+), " +

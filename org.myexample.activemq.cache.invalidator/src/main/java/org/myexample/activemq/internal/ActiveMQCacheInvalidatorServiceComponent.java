@@ -2,16 +2,12 @@ package org.myexample.activemq.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.myexample.activemq.ConsumerActiveMQCacheInvalidator;
 import org.myexample.activemq.ProducerActiveMQCacheInvalidator;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.user.core.service.RealmService;
-import org.myexample.activemq.ConsumerActiveMQCacheInvalidator;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -64,7 +60,7 @@ public class ActiveMQCacheInvalidatorServiceComponent {
             try {
 //                if (isActiveMQCacheInvalidatorEnabled() != null && isActiveMQCacheInvalidatorEnabled()) {
                 if (isActiveMQCacheInvalidatorEnabled() != null) {
-                    ConsumerActiveMQCacheInvalidator.startService();
+                    ConsumerActiveMQCacheInvalidator.getInstance().startService();
                     log.info("ActiveMQ Cache Invalidator Service bundle activated successfully.");
                     scheduler.shutdown(); // Stop polling once activated
                 }

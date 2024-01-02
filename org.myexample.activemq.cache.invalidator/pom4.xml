@@ -59,19 +59,19 @@
     <build>
         <plugins>
             <!-- Shade Plugin Configuration -->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-shade-plugin</artifactId>-->
-<!--                <version>3.2.4</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>shade</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Maven Bundle Plugin Configuration -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -98,10 +98,7 @@
                         <Private-Package>
                             org.myexample.activemq.internal
                         </Private-Package>
-                        <Embed-Dependency>
-                            activemq-all
-                        </Embed-Dependency>
-                        <Embed-Transitive>true</Embed-Transitive>
+<!--                        <Embed-Transitive>true</Embed-Transitive>-->
                         <Export-Package>
                             !org.myexample.activemq.internal,
                             org.myexample.activemq.*,
